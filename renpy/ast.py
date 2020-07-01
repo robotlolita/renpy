@@ -1421,11 +1421,21 @@ class Menu(Node):
                 choices.append((label, condition, i))
                 next_node(block[0])
 
-        if narration:
-            renpy.exports.say(None, "\n".join(narration), interact=False)
+        auto_choice = None
+        if renpy.config.menu_choice_before_callback:
+            auto_choice = renpy.config.menu_choice_before_callback(choices, self.name)
 
-        say_menu_with(self.with_, renpy.game.interface.set_transition)
-        choice = renpy.exports.menu(choices, self.set)
+        if auto_choice is None:
+            if narration:
+                renpy.exports.say(None, "\n".join(narration), interact=False)
+
+            say_menu_with(self.with_, renpy.game.interface.set_transition)
+            choice = renpy.exports.menu(choices, self.set)
+        else:
+            choice = auto_choice
+
+        if renpy.config.menu_choice_after_callback and choice is not None:
+            renpy.config.menu_choice_after_callback(choice, self.name)
 
         if choice is not None:
             next_node(self.items[choice][2][0])
